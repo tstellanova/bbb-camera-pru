@@ -35,34 +35,34 @@
 #define PRU1_CTPPR_1         0x2402C
 
 
-.macro  LD32
+.macro  ld32
 .mparam dst,src
-    LBBO    dst,src,#0x00,4
+    lbbo    dst,src,#0x00,4
 .endm
 
-.macro  LD16
+.macro  ld16
 .mparam dst,src
-    LBBO    dst,src,#0x00,2
+    lbbo    dst,src,#0x00,2
 .endm
 
-.macro  LD8
+.macro  ld8
 .mparam dst,src
-    LBBO    dst,src,#0x00,1
+    lbbo    dst,src,#0x00,1
 .endm
 
 .macro st32
 .mparam src,dst
-    SBBO    src,dst,#0x00,4
+    sbbo    src,dst,#0x00,4
 .endm
 
-.macro ST16
+.macro st16
 .mparam src,dst
-    SBBO    src,dst,#0x00,2
+    sbbo    src,dst,#0x00,2
 .endm
 
-.macro ST8
+.macro st8
 .mparam src,dst
-    SBBO    src,dst,#0x00,1
+    sbbo    src,dst,#0x00,1
 .endm
 
 
