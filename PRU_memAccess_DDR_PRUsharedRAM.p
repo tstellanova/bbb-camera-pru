@@ -33,8 +33,13 @@ MEMACCESS_DDR_PRUSHAREDRAM:
     //Store values from read from the DDR memory into PRU shared RAM
     SBCO      r0, CONST_PRUSHAREDRAM, 0, 12
 
+    mov r1, 40000000
+
+loop:
     // Wait for pixel clock
-    WBS       r31, 16
+    wbs       r31, 16
+    sub r1, r1, 1
+    qblt loop, r1, 0
 
     // Send notification to Host for program completion
     MOV       r31.b0, PRU1_ARM_INTERRUPT+16
