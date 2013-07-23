@@ -39,7 +39,7 @@
 * Local Macro Declarations                                                    *
 ******************************************************************************/
 
-#define PRU_NUM 	 0
+#define PRU_NUM 	 1
 #define ADDEND1	 	 0x98765400u
 #define ADDEND2		 0x12345678u
 #define ADDEND3		 0x10210210u
@@ -90,12 +90,12 @@ int main (void)
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
     
-    printf("\nINFO: Starting %s example.\r\n", "PRU_memAccess_DDR_PRUsharedRAM");
+    printf("\nINFO: Starting %s example.\n", "PRU_memAccess_DDR_PRUsharedRAM");
     /* Initialize the PRU */
     prussdrv_init ();		
     
     /* Open PRU Interrupt */
-    ret = prussdrv_open(PRU_EVTOUT_0);
+    ret = prussdrv_open(PRU_EVTOUT_1);
     if (ret)
     {
         printf("prussdrv_open open failed\n");
@@ -106,29 +106,29 @@ int main (void)
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
     /* Initialize example */
-    printf("\tINFO: Initializing example.\r\n");
+    printf("\tINFO: Initializing example.\n");
     LOCAL_exampleInit();
     
     /* Execute example on PRU */
-    printf("\tINFO: Executing example.\r\n");
+    printf("\tINFO: Executing example.\n");
     prussdrv_pru_disable(PRU_NUM);
-    prussdrv_pru_write_memory(PRUSS0_PRU0_IRAM, 0, PRUcode, sizeof(PRUcode));
+    prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM, 0, PRUcode, sizeof(PRUcode));
     prussdrv_pru_enable(PRU_NUM);
 
     /* Wait until PRU0 has finished execution */
-    printf("\tINFO: Waiting for HALT command.\r\n");
-    prussdrv_pru_wait_event (PRU_EVTOUT_0);
-    printf("\tINFO: PRU completed transfer.\r\n");
-    prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
+    printf("\tINFO: Waiting for HALT command.\n");
+    prussdrv_pru_wait_event (PRU_EVTOUT_1);
+    printf("\tINFO: PRU completed transfer.\n");
+    prussdrv_pru_clear_event (PRU1_ARM_INTERRUPT);
 
     /* Check if example passed */
     if ( LOCAL_examplePassed(PRU_NUM) )
     {
-        printf("Example executed succesfully.\r\n");
+        printf("Example executed succesfully.\n");
     }
     else
     {
-        printf("Example failed.\r\n");
+        printf("Example failed.\n");
     }
     
     /* Disable PRU and close memory mapping*/
