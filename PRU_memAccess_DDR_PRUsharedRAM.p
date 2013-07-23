@@ -11,6 +11,10 @@ MEMACCESS_DDR_PRUSHAREDRAM:
     CLR     r0, r0, 4         // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
     SBCO      r0, CONST_PRUCFG, 4, 4
 
+    // Enable 16 bit parallel capture mode
+    MOV     r0, 0x01
+    SBCO    r0, CONST_PRUCFG, 0x0c, 4
+
     // Configure the programmable pointer register for PRU0 by setting c28_pointer[15:0]
     // field to 0x0120.  This will make C28 point to 0x00012000 (PRU shared RAM).
     MOV     r0, 0x00000120
@@ -28,6 +32,9 @@ MEMACCESS_DDR_PRUSHAREDRAM:
 
     //Store values from read from the DDR memory into PRU shared RAM
     SBCO      r0, CONST_PRUSHAREDRAM, 0, 12
+
+    // Wait for pixel clock
+    WBS       r31, 16
 
     // Send notification to Host for program completion
     MOV       r31.b0, PRU1_ARM_INTERRUPT+16
