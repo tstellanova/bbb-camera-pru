@@ -165,6 +165,13 @@ static unsigned short LOCAL_examplePassed()
     unsigned int line_count = ddrMem_int[1];
 
     printf("pixel_count=%d, line_count=%d\n", pixel_count, line_count);
+    if (pixel_count != 360960 || line_count != 480) {
+        return 0;
+    }
+
+    FILE *fp = fopen("output.raw", "wb");
+    fwrite(&ddrMem_int[3], 1, pixel_count, fp);
+    fclose(fp);
 
     return 1;
 }

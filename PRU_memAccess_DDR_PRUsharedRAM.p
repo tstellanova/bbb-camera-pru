@@ -33,10 +33,12 @@ start:
 .struct Stats
     .u32 pixels
     .u32 lines
+    .u32 frameptr
 .ends
 .assign Stats, r3, *, stats
 
     zero &stats, SIZE(stats)
+    add stats.frameptr, config.ddr, SIZE(stats)
 
     // Wait for vsync
 vsync_loop:
@@ -62,6 +64,14 @@ read_line:
     qbbc wait_for_start_line, r31, 10 // if lv goes to 0, then wait for the next line
 
     add stats.pixels, stats.pixels, 1 // got a pixel
+
+    // trim the pixel to 8 bits for now
+    lsr r0, r31, 2
+    and r0, r0, 255
+
+    sbbo r0.b0, stats.frameptr, 0, 1
+    add stats.frameptr, stats.frameptr, 1
+
     qba read_line
 
 done:
