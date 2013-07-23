@@ -1,34 +1,33 @@
 
 .origin 0
-.entrypoint MEMACCESS_DDR_PRUSHAREDRAM
+.entrypoint start
 
 #include "PRU_memAccess_DDR_PRUsharedRAM.hp"
 
-MEMACCESS_DDR_PRUSHAREDRAM:
+start:
+
+.struct Configuration
+    .u32 ddr
+.ends
+
+.assign Configuration, r2, *, config
 
     // Enable OCP master port
     lbco      r0, CONST_PRUCFG, 4, 4
     clr     r0, r0, 4         // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
     sbco      r0, CONST_PRUCFG, 4, 4
 
+    // Setup CONST_PRUSHAREDDRAM to point to the base of the PRU shared memory region
+    mov     r0, 0x00000100
+    mov       r1, PRU1_CTRL_CTPPR_0
+    st32      r0, r1
+
+    // Copy the configuration data from PRU shared memory
+    lbco    &config, CONST_PRUSHAREDRAM, 0, 4
+
     // Enable 16 bit parallel capture mode
     mov     r0, 0x01
     sbco    r0, CONST_PRUCFG, 0x0c, 4
-
-    // Configure the programmable pointer register for PRU0 by setting c28_pointer[15:0]
-    // field to 0x0120.  This will make C28 point to 0x00012000 (PRU shared RAM).
-    mov     r0, 0x00000120
-    mov       r1, PRU1_CTPPR_0
-    st32      r0, r1
-
-    // Configure the programmable pointer register for PRU0 by setting c31_pointer[15:0]
-    // field to 0x0010.  This will make C31 point to 0x80001000 (DDR memory).
-    mov     r0, 0x00100000
-    mov       r1, PRU1_CTPPR_1
-    st32      r0, r1
-
-    //Load values from external DDR Memory into Registers R0/R1/R2
-    lbco      r0, CONST_DDR, 0, 12
 
 .enter Scope
 .struct Stats
@@ -66,7 +65,7 @@ read_line:
     qba read_line
 
 done:
-    sbco      &stats, CONST_PRUSHAREDRAM, 0, SIZE(stats)
+    sbbo &stats, config.ddr, 0, SIZE(stats)
 
 .leave Scope
 

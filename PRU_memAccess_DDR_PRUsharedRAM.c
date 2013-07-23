@@ -40,13 +40,6 @@
 ******************************************************************************/
 
 #define PRU_NUM 	 1
-#define ADDEND1	 	 0x98765400u
-#define ADDEND2		 0x12345678u
-#define ADDEND3		 0x10210210u
-
-#define DDR_BASEADDR     0x80000000
-#define OFFSET_DDR	 0x00001000 
-#define OFFSET_SHAREDRAM 2048		//equivalent with 0x00002000
 
 #define PRUSS0_SHARED_DATARAM    4
 
@@ -76,10 +69,10 @@ static unsigned short LOCAL_examplePassed ();
 * Global Variable Definitions                                                 *
 ******************************************************************************/
 
-static int mem_fd;
 static void *ddrMem, *sharedMem;
 
 static unsigned int *sharedMem_int;
+static unsigned int *ddrMem_int;
 
 /******************************************************************************
 * Global Function Definitions                                                 *
@@ -134,8 +127,6 @@ int main (void)
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(PRU_NUM); 
     prussdrv_exit ();
-    munmap(ddrMem, 0x0FFFFFFF);
-    close(mem_fd);
 
     return(0);
 }
@@ -144,55 +135,36 @@ int main (void)
 * Local Function Definitions                                                 *
 *****************************************************************************/
 
+#define DDR_MIN_SIZE (1024*1024)
+
 static int LOCAL_exampleInit (  )
 {
-    void *DDR_regaddr1, *DDR_regaddr2, *DDR_regaddr3;	
+    prussdrv_map_extmem(&ddrMem);
 
-    /* open the device */
-    mem_fd = open("/dev/mem", O_RDWR);
-    if (mem_fd < 0) {
-        printf("Failed to open /dev/mem (%s)\n", strerror(errno));
-        return -1;
-    }	
-
-    /* map the DDR memory */
-    ddrMem = mmap(0, 0x0FFFFFFF, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, DDR_BASEADDR);
-    if (ddrMem == NULL) {
-        printf("Failed to map the device (%s)\n", strerror(errno));
-        close(mem_fd);
+    if (prussdrv_extmem_size() < DDR_MIN_SIZE) {
+        printf("extmem_size not large enough. Check that uio_pruss.extram_pool_sz=0x%x or larger.\n", DDR_MIN_SIZE);
         return -1;
     }
-    
-    /* Store Addends in DDR memory location */
-    DDR_regaddr1 = ddrMem + OFFSET_DDR;
-    DDR_regaddr2 = ddrMem + OFFSET_DDR + 0x00000004;
-    DDR_regaddr3 = ddrMem + OFFSET_DDR + 0x00000008;
 
-    *(unsigned long*) DDR_regaddr1 = ADDEND1;
-    *(unsigned long*) DDR_regaddr2 = ADDEND2;
-    *(unsigned long*) DDR_regaddr3 = ADDEND3;
+    ddrMem_int = (unsigned int*) ddrMem;
+    memset(ddrMem, 0, DDR_MIN_SIZE);
 
     /* Allocate Shared PRU memory. */
-   prussdrv_map_prumem(PRUSS0_SHARED_DATARAM, &sharedMem);
-   sharedMem_int = (unsigned int*) sharedMem;
+    prussdrv_map_prumem(PRUSS0_SHARED_DATARAM, &sharedMem);
+    sharedMem_int = (unsigned int*) sharedMem;
 
-   sharedMem_int[OFFSET_SHAREDRAM] = 0;
-   sharedMem_int[OFFSET_SHAREDRAM + 1] = 0;
-   sharedMem_int[OFFSET_SHAREDRAM + 2] = 0;
+    // Tell the PRU where the DDR buffer lives
+    sharedMem_int[0] = prussdrv_get_phys_addr(ddrMem);
 
     return(0);
 }
 
 static unsigned short LOCAL_examplePassed()
 {
-    unsigned int result_0, result_1, result_2;
+    unsigned int pixel_count = ddrMem_int[0];
+    unsigned int line_count = ddrMem_int[1];
 
+    printf("pixel_count=%d, line_count=%d\n", pixel_count, line_count);
 
-    result_0 = sharedMem_int[OFFSET_SHAREDRAM];
-    result_1 = sharedMem_int[OFFSET_SHAREDRAM + 1];
-    result_2 = sharedMem_int[OFFSET_SHAREDRAM + 2];
-
-    printf("result0=%d (0x%08x), result1=%d (0x%08x)\n", result_0, result_0, result_1, result_1);
-
-    return ((result_0 == ADDEND1) & (result_1 ==  ADDEND2) & (result_2 ==  ADDEND3)) ;
+    return 1;
 }
