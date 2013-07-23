@@ -60,7 +60,7 @@
 ******************************************************************************/
 
 static int LOCAL_exampleInit ( );
-static unsigned short LOCAL_examplePassed ( unsigned short pruNum );
+static unsigned short LOCAL_examplePassed ();
 
 /******************************************************************************
 * Local Variable Definitions                                                  *
@@ -122,7 +122,7 @@ int main (void)
     prussdrv_pru_clear_event (PRU1_ARM_INTERRUPT);
 
     /* Check if example passed */
-    if ( LOCAL_examplePassed(PRU_NUM) )
+    if ( LOCAL_examplePassed() )
     {
         printf("Example executed succesfully.\n");
     }
@@ -172,21 +172,27 @@ static int LOCAL_exampleInit (  )
     *(unsigned long*) DDR_regaddr2 = ADDEND2;
     *(unsigned long*) DDR_regaddr3 = ADDEND3;
 
+    /* Allocate Shared PRU memory. */
+   prussdrv_map_prumem(PRUSS0_SHARED_DATARAM, &sharedMem);
+   sharedMem_int = (unsigned int*) sharedMem;
+
+   sharedMem_int[OFFSET_SHAREDRAM] = 0;
+   sharedMem_int[OFFSET_SHAREDRAM + 1] = 0;
+   sharedMem_int[OFFSET_SHAREDRAM + 2] = 0;
+
     return(0);
 }
 
-static unsigned short LOCAL_examplePassed ( unsigned short pruNum )
+static unsigned short LOCAL_examplePassed()
 {
     unsigned int result_0, result_1, result_2;
 
-     /* Allocate Shared PRU memory. */
-    prussdrv_map_prumem(PRUSS0_SHARED_DATARAM, &sharedMem);
-    sharedMem_int = (unsigned int*) sharedMem;
 
     result_0 = sharedMem_int[OFFSET_SHAREDRAM];
     result_1 = sharedMem_int[OFFSET_SHAREDRAM + 1];
     result_2 = sharedMem_int[OFFSET_SHAREDRAM + 2];
 
-    return ((result_0 == ADDEND1) & (result_1 ==  ADDEND2) & (result_2 ==  ADDEND3)) ;
+    printf("result0=%d (0x%08x), result1=%d (0x%08x)\n", result_0, result_0, result_1, result_1);
 
+    return ((result_0 == ADDEND1) & (result_1 ==  ADDEND2) & (result_2 ==  ADDEND3)) ;
 }
