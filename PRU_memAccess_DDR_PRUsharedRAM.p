@@ -58,6 +58,14 @@ wait_for_start_line:
 
     add stats.lines, stats.lines, 1 // start of a line
     add stats.pixels, stats.pixels, 1 // got a pixel
+
+    // trim the pixel to 8 bits for now
+    lsr r0, r31, 2
+    and r0, r0, 255
+
+    sbbo r0.b0, stats.frameptr, 0, 1
+    add stats.frameptr, stats.frameptr, 1
+
 read_line:
     wbs r31, 16
     qbbc done, r31, 11 // if fv goes to 0, then done
